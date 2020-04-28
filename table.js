@@ -236,23 +236,14 @@ var tagMutator = function(value, data, type, params, component){
 }
 
 var parseCell = function(data) {
-    // values = data.split('|');
-    // tags = values[0].split(' ');
-    // color = values[1];
-    // if(!color){
-    //     color = '';
-    // }
-    // return {tag:tags, color:color};
     if (data) {
-        return data;
+        return JSON.parse(data);
     }
     return {tag:[], color:""};
 };
 
 var packCell = function(data) {
-    return data;
-    //tags = data.tag.join(' ').trim()
-    //return tags + '|' + value.color;
+    return JSON.stringify(data);
 };
 
 var cellFormatter = function(cell, formatParams, onRendered) {
@@ -273,7 +264,7 @@ var setColor = function(obj) {
     color = $(obj).css('background-color');
     $.post('data/layout',
             {'op': 'color', 'op1': color, 'op2': JSON.stringify(selected)},
-            function(data, status, jqXHR) {
+            function(data) {
                 if (data == 'ok') {
                     showMessage('Success');
                 } else {

@@ -47,17 +47,18 @@ def merge_layout_cell(cell1, cell2):
     return make_layout_cell(tag1 + tag2, color1)
 
 def parse_layout_cell(cell):
-    # tags = cell.split('|')
-    # color = ''
-    # if len(tags) > 1:
-    #     color = tags[1]
-    # tags = tags[0].split(' ')
-    # return tags, color
-    return cell.tag, cell.color
+    res = {'tag':[], 'color':''}
+    if len(cell) > 0:
+        _res = json.loads(cell)
+        if 'tag' in _res:
+            res['tag'] = _res['tag']
+        if 'color' in _res:
+            res['color'] = _res['color']
+    return res['tag'], res['color']
 
 def make_layout_cell(tags, color):
     #return ' '.join(tags) + '|' + color
-    return {'tag':tags, 'color':color}
+    return json.dumps({'tag':tags, 'color':color})
 
 class DataHolder:
     def __init__(self, animal_list_file, animal_proc_file, animal_breed_file):
@@ -80,9 +81,11 @@ class DataHolder:
         self.animal_list.loc[np.logical_and(live_filter, p2_filter), 'loc'] = pos1
         row1, col1 = get_position(pos1)
         row2, col2 = get_position(pos2)
-        (self.layout.loc[row1, col1], 
-            self.layout.loc[row2, col2]) = (self.layout.loc[row2, col2], 
-                self.layout.loc[row1, col1])
+        print (row1, col1, row2, col2)
+        cell1 = self.layout.loc[row1, col1]
+        cell2 = self.layout.loc[row2, col2]
+        self.layout.loc[row2, col2] = cell1
+        self.layout.loc[row1, col1] = cell2
 
     def merge(self, pos1, pos2):
         live_filter = pd.isna(self.animal_list['death'])
@@ -135,7 +138,7 @@ class DataHolder:
     def set_color(self, color, pos_list):
         for pos in pos_list:
             row, col = get_position(pos)
-            tags, color = parse_layout_cell(self.layout.loc[row, col])
+            tags, _color = parse_layout_cell(self.layout.loc[row, col])
             self.layout.loc[row, col] = make_layout_cell(tags, color)
             self.animal_list.loc[self.animal_list['loc'] == pos, 'color'] = color
 
@@ -210,10 +213,10 @@ class DataHolder:
         affected = self.animal_list[self.animal_list['loc'].isin(cages)]
         self.layout = list_to_table(self.animal_list)
         rebuilt_layout = list_to_table(affected)
-        print (cages, rebuilt_layout)
-        #for row in rebuilt_layout.index:
-        #    for col in rebuilt_layout.columns:
-        #        self.layout.loc[row, col] = rebuilt_layout.loc[row, col]
+        # print (cages, rebuilt_layout)
+        for row in rebuilt_layout.index:
+           for col in rebuilt_layout.columns:
+               self.layout.loc[row, col] = rebuilt_layout.loc[row, col]
 
 
 class BaseHandler(tornado.web.RequestHandler):
